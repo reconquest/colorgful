@@ -2,6 +2,7 @@ package colorgful
 
 import (
 	"bytes"
+	"regexp"
 	"text/template"
 
 	"github.com/kovetskiy/lorg"
@@ -38,44 +39,22 @@ type DefaultThemeStyles struct {
 }
 
 var (
-	// DefaultThemeTemplate is the common template for the Dark and Light
-	// themes.
-	//
-	// It should be populated using DefaultThemeStyles
-	DefaultThemeTemplate = template.Must(
-		template.New(`theme`).Delims(`@{`, `}`).Parse(`` +
-			`{ontrace "@{.Trace}"}` +
-			`{ondebug "@{.Debug}"}` +
-			`{oninfo "@{.Info}"}` +
-			`{onwarning "@{.Warning}"}` +
-			`{onerror "@{.Error}"}` +
-			`{onfatal "@{.Fatal}"}` +
-			`{store}` +
-			`${time} ` +
-			`{onerror "@{.ErrorLevel}"}` +
-			`{onfatal "@{.FatalLevel}"}` +
-			`${level:[%s]:right:true}` +
-			`{restore}` +
-			` %s`,
-		),
-	)
-
-	// DarkStyles are the default styles, suitable for the dark shell
+	// Dark are the default styles, suitable for the dark shell
 	// backgrounds.
-	DarkStyles = DefaultThemeStyles{
+	Dark = DefaultThemeStyles{
 		Trace:      `{fg 243}`,
 		Debug:      `{fg 250}`,
 		Info:       `{fg 110}`,
 		Warning:    `{fg 178}`,
 		Error:      `{fg 202}`,
-		Fatal:      `{bold}{fg 168}{bg 17}`,
+		Fatal:      `{bold}{fg 197}{bg 17}`,
 		ErrorLevel: `{bold}{bg 52}`,
 		FatalLevel: ``,
 	}
 
-	// LightStyles are the default styles, suitable for the dark shell
+	// Light are the default styles, suitable for the light shell
 	// backgrounds.
-	LightStyles = DefaultThemeStyles{
+	Light = DefaultThemeStyles{
 		Trace:      `{fg 250}`,
 		Debug:      `{fg 243}`,
 		Info:       `{fg 26}`,
@@ -85,32 +64,45 @@ var (
 		ErrorLevel: `{reverse}{bold}{bg 231}`,
 		FatalLevel: ``,
 	}
-
-	// Dark is a default theme, suitable for the dark backgrounds.
-	Dark lorg.Formatter
-
-	// Light is a default theme, suitable for the light backgrounds.
-	Light lorg.Formatter
 )
 
-func init() {
-	var err error
+var (
+	levelPlaceholderRegexp = regexp.MustCompile(`\s*\${level[^}]*}\s*`)
+)
 
-	Dark, err = compileTheme(DarkStyles)
-	if err != nil {
-		panic(err)
-	}
+// ApplyDefaultTheme applies default theme to the given lorg formatting string.
+//
+// `styles` can be used to specify color scheme for the default theme.
+func ApplyDefaultTheme(
+	formatting string,
+	styles DefaultThemeStyles,
+) (lorg.Formatter, error) {
+	lineStyles := `` +
+		`{ontrace "{{.Trace}}"}` +
+		`{ondebug "{{.Debug}}"}` +
+		`{oninfo "{{.Info}}"}` +
+		`{onwarning "{{.Warning}}"}` +
+		`{onerror "{{.Error}}"}` +
+		`{onfatal "{{.Fatal}}"}` +
+		`{store}`
 
-	Light, err = compileTheme(LightStyles)
-	if err != nil {
-		panic(err)
-	}
-}
+	levelStyles := `` +
+		`{onerror "{{.ErrorLevel}}"}` +
+		`{onfatal "{{.FatalLevel}}"}` +
+		`$0` +
+		`{restore}`
 
-func compileTheme(styles DefaultThemeStyles) (lorg.Formatter, error) {
+	format := lineStyles + levelPlaceholderRegexp.ReplaceAllString(
+		formatting,
+		levelStyles,
+	)
+
 	buffer := bytes.Buffer{}
 
-	err := DefaultThemeTemplate.Execute(&buffer, styles)
+	err := template.Must(template.New(`theme`).Parse(format)).Execute(
+		&buffer,
+		styles,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -121,4 +113,17 @@ func compileTheme(styles DefaultThemeStyles) (lorg.Formatter, error) {
 	}
 
 	return theme, nil
+}
+
+// MustApplyDefaultTheme is the same, as ApplyDefaultTheme, but panics on error.
+func MustApplyDefaultTheme(
+	formatting string,
+	styles DefaultThemeStyles,
+) lorg.Formatter {
+	format, err := ApplyDefaultTheme(formatting, styles)
+	if err != nil {
+		panic(err)
+	}
+
+	return format
 }

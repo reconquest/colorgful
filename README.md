@@ -25,7 +25,10 @@ import (
 func main() {
 	log := lorg.NewLog()
 
-	log.SetFormat(colorgful.Dark)
+	log.SetFormat(colorgful.MustApplyDefaultTheme(
+		`* ${time} ${level} %s`,
+		colorgful.Light,
+	))
 
 	log.SetLevel(lorg.LevelTrace)
 

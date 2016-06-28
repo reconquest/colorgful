@@ -35,43 +35,27 @@ func TestNewFormat_SetsStyleForAllLevels(t *testing.T) {
 func TestNewFormat_SetsStyleForSpecifiedLevel(t *testing.T) {
 	test := assert.New(t)
 
-	buffer, log := setupBufferedLogger(
-		t,
+	formats := []string{
 		`{onlevel "error" "{bg 1}"}${level} %s`,
-	)
-
-	log.Error(`hello`)
-
-	test.Equal(
-		compileExpectedStyle(t, "{bg 1}ERROR hello\n"),
-		buffer.String(),
-	)
-
-	buffer.Reset()
-
-	log.Info(`ok`)
-	test.Equal("INFO ok\n", buffer.String())
-}
-
-func TestNewFormat_SetsStyleByShortcutForSpecificLevel(t *testing.T) {
-	test := assert.New(t)
-
-	buffer, log := setupBufferedLogger(
-		t,
 		`{onerror "{bg 1}"}${level} %s`,
-	)
+	}
 
-	log.Error(`hello`)
+	for _, format := range formats {
+		buffer, log := setupBufferedLogger(t, format)
 
-	test.Equal(
-		compileExpectedStyle(t, "{bg 1}ERROR hello\n"),
-		buffer.String(),
-	)
+		log.Error(`hello`)
 
-	buffer.Reset()
+		test.Equal(
+			compileExpectedStyle(t, "{bg 1}ERROR hello\n"),
+			buffer.String(),
+		)
 
-	log.Info(`ok`)
-	test.Equal("INFO ok\n", buffer.String())
+		buffer.Reset()
+
+		log.Info(`ok`)
+		test.Equal("INFO ok\n", buffer.String())
+	}
+
 }
 
 func TestNewFormat_CanRestoreStyleAfterSuccessfullLevelMatch(t *testing.T) {
