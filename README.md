@@ -1,4 +1,4 @@
-# colorgful
+# colorgful ![report](https://goreportcard.com/badge/github.com/reconquest/colorgful)
 
 Colorizer extension for [lorg](https://github.com/kovetskiy/lorg).
 
