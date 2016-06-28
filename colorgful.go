@@ -15,17 +15,19 @@ var (
 // lorg.Formatter.
 //
 // Following functions are available:
-// * {bg <color>}, {fg <color>}, {nobg}, {nofg}, {bold}, {nobold}, {reverse},
-//   {noreverse}, {reset}, {from <text> <bg>}, {to <bg> <text>}.
-// * {onlevel <level> <style>} - match given level and insert given style.
-// * {ontrace <style>} - alias for {onlevel "trace" <style>.
-// * {ondebug <style>} - alias for {onlevel "debug" <style>.
-// * {oninfo <style>} - alias for {onlevel "info" <style>.
-// * {onwarning <style>} - alias for {onlevel "warning" <style>.
-// * {onerror <style>} - alias for {onlevel "error" <style>.
-// * {onfatal <style>} - alias for {onlevel "fatal" <style>.
-// * {store} - store all previous style
-// * {restore} - restore previous style, saved by {store}.
+//
+//   * {bg <color>}, {fg <color>}, {nobg}, {nofg}, {bold}, {nobold}, {reverse},
+//     {noreverse}, {reset}, {from <text> <bg>}, {to <bg> <text>}.
+//   * {onlevel <level> <style>} - match given level and insert given style.
+//   * {ontrace <style>} - alias for {onlevel "trace" <style>}.
+//   * {ondebug <style>} - alias for {onlevel "debug" <style>}.
+//   * {oninfo <style>} - alias for {onlevel "info" <style>}.
+//   * {onwarning <style>} - alias for {onlevel "warning" <style>}.
+//   * {onerror <style>} - alias for {onlevel "error" <style>}.
+//   * {onfatal <style>} - alias for {onlevel "fatal" <style>}.
+//   * {store} - store all previous style
+//   * {restore} - restore previous style, saved by {store}.
+//
 func Format(formatting string) (lorg.Formatter, error) {
 	formatting = placeholderRegexp.ReplaceAllString(
 		formatting,
