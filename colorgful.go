@@ -9,6 +9,9 @@ import (
 
 var (
 	placeholderRegexp = regexp.MustCompile(`\${([^}]+)}`)
+
+	// Specifies whether format result should contain no escape sequences.
+	NoColors = false
 )
 
 // Format parses specified formatting (loreley based) and return
@@ -72,6 +75,8 @@ func Format(formatting string) (lorg.Formatter, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	style.NoColors = NoColors
 
 	inserter.Style = style
 
