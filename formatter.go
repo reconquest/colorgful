@@ -8,8 +8,8 @@ type formatter struct {
 	restorer *restorer
 }
 
-func (format *formatter) Render(level lorg.Level) string {
+func (format *formatter) Render(level lorg.Level, prefix string) string {
 	format.restorer.reset()
 
-	return format.Format.Render(level)
+	return format.Format.Render(level, prefix)
 }
