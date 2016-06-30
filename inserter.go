@@ -26,17 +26,11 @@ func (inserter *inserter) insertOnLevel(
 		return fmt.Sprintf("#{COMPILE ERROR: %s}", err)
 	}
 
-	style.NoColors = NoColors
-
-	var previous string
-
-	if !NoColors {
-		previous, _ = loreley.CompileAndExecuteToString(
-			inserter.GetState().String(),
-			nil,
-			nil,
-		)
-	}
+	previous, _ := loreley.CompileAndExecuteToString(
+		inserter.GetState().String(),
+		nil,
+		nil,
+	)
 
 	style.SetState(inserter.GetState())
 
