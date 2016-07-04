@@ -2,6 +2,7 @@ package colorgful
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/kovetskiy/lorg"
 	"github.com/reconquest/loreley"
@@ -30,7 +31,7 @@ var (
 //
 func Format(formatting string) (lorg.Formatter, error) {
 	formatting = placeholderRegexp.ReplaceAllString(
-		formatting,
+		strings.Replace(formatting, `\`, `\\`, -1),
 		`{lorg "$1"}`,
 	)
 
