@@ -64,6 +64,19 @@ var (
 		ErrorLevel: `{reverse}{bold}{bg 231}`,
 		FatalLevel: ``,
 	}
+
+	// Default are the default styles, suitable for the both
+	// light and dark shell backgrounds.
+	Default = DefaultThemeStyles{
+		Trace:      `{nofg}`,
+		Debug:      `{fg 31}`,
+		Info:       `{fg 33}`,
+		Warning:    `{bold}{fg 172}`,
+		Error:      `{bold}{fg 9}`,
+		Fatal:      `{bold}{fg 231}{bg 124}`,
+		ErrorLevel: `{bold}{fg 231}{bg 196}`,
+		FatalLevel: `{bold}{fg 231}{bg 196}`,
+	}
 )
 
 var (
