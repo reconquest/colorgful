@@ -82,6 +82,7 @@ func Format(formatting string) (lorg.Formatter, error) {
 	}
 
 	format := lorg.NewFormat(formatting)
+
 	format.SetPlaceholder("onlevel", restorer.handleOnLevel)
 	format.SetPlaceholder("restore", restorer.handleRestore)
 	format.SetPlaceholder("store", restorer.handleStore)

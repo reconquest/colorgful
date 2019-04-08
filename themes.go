@@ -2,80 +2,122 @@ package colorgful
 
 import (
 	"bytes"
+	"io"
+	"os"
 	"regexp"
 	"text/template"
 
 	"github.com/kovetskiy/lorg"
 )
 
+type Theme struct {
+	lorg.Formatter
+	lorg.SmartOutput
+}
+
+// DefaultThemeLevel describes how to highlight given level.
+type DefaultThemeLevel struct {
+	// First describes style for first line.
+	First string
+
+	// Trail describes style for all other lines.
+	Trail string
+
+	// Level describes style for level substring.
+	Level string
+}
+
 // DefaultThemeStyles represents template values for default Light and Dark
 // themes.
 type DefaultThemeStyles struct {
 	// Trace specifies overall style for trace logs level
-	Trace string
+	Trace DefaultThemeLevel
 
 	// Debug specifies overall style for debug logs level
-	Debug string
+	Debug DefaultThemeLevel
 
 	// Info specifies overall style for info logs level
-	Info string
+	Info DefaultThemeLevel
 
 	// Warning specifies overall style for warning log level
-	Warning string
+	Warning DefaultThemeLevel
 
 	// Error specifies overall style for error log level
-	Error string
+	Error DefaultThemeLevel
 
 	// Fatal specifies overall style for fatal log level
-	Fatal string
+	Fatal DefaultThemeLevel
+}
 
-	// ErrorLevel specifies custom style for the ${level} placeholder for
-	// error log level
-	ErrorLevel string
+type DefaultOutput struct {
+	io.Writer
 
-	// FatalLevel specifies custom style for the ${level} placeholder for
-	// fatal log level
-	FatalLevel string
+	Trailer lorg.Formatter
+}
+
+func (output *DefaultOutput) WriteWithLevel(
+	data []byte,
+	level lorg.Level,
+) (int, error) {
+	return output.Write(
+		bytes.Replace(
+			data,
+			[]byte("\n"),
+			[]byte(output.Trailer.Render(level, ``)+"\n"),
+			1,
+		),
+	)
 }
 
 var (
 	// Dark are the default styles, suitable for the dark shell
 	// backgrounds.
 	Dark = DefaultThemeStyles{
-		Trace:      `{fg 243}`,
-		Debug:      `{fg 250}`,
-		Info:       `{fg 110}`,
-		Warning:    `{fg 178}`,
-		Error:      `{fg 202}`,
-		Fatal:      `{bold}{fg 197}{bg 17}`,
-		ErrorLevel: `{bold}{bg 52}`,
-		FatalLevel: ``,
+		Trace:   DefaultThemeLevel{First: `{fg 243}`},
+		Debug:   DefaultThemeLevel{First: `{fg 250}`},
+		Info:    DefaultThemeLevel{First: `{fg 110}`},
+		Warning: DefaultThemeLevel{First: `{fg 178}`},
+		Error: DefaultThemeLevel{
+			First: `{fg 202}`,
+			Level: `{bold}{bg 52}`,
+		},
+		Fatal: DefaultThemeLevel{First: `{bold}{fg 197}{bg 17}`},
 	}
 
 	// Light are the default styles, suitable for the light shell
 	// backgrounds.
 	Light = DefaultThemeStyles{
-		Trace:      `{fg 250}`,
-		Debug:      `{fg 243}`,
-		Info:       `{fg 26}`,
-		Warning:    `{fg 167}{bg 230}`,
-		Error:      `{bold}{fg 161}`,
-		Fatal:      `{bold}{fg 231}{bg 124}`,
-		ErrorLevel: `{reverse}{bold}{bg 231}`,
-		FatalLevel: ``,
+		Trace:   DefaultThemeLevel{First: `{fg 250}`},
+		Debug:   DefaultThemeLevel{First: `{fg 243}`},
+		Info:    DefaultThemeLevel{First: `{fg 26}`},
+		Warning: DefaultThemeLevel{First: `{fg 167}{bg 230}`},
+		Error: DefaultThemeLevel{
+			First: `{bold}{fg 161}`,
+			Level: `{reverse}{bold}{bg 231}`,
+		},
+		Fatal: DefaultThemeLevel{First: `{bold}{fg 231}{bg 124}`},
 	}
 
 	// Default are the default styles, suitable for the both
 	// light and dark shell backgrounds.
 	Default = DefaultThemeStyles{
-		Trace:      `{nofg}`,
-		Debug:      `{fg 31}`,
-		Info:       `{fg 33}`,
-		Warning:    `{bold}{fg 172}`,
-		Error:      `{bold}{fg 9}`,
-		Fatal:      `{bold}{fg 231}{bg 124}`,
-		ErrorLevel: `{bold}{fg 231}{bg 196}`,
-		FatalLevel: `{bold}{fg 231}{bg 196}`,
+		Trace: DefaultThemeLevel{First: `{nofg}`},
+		Debug: DefaultThemeLevel{First: `{fg 31}`},
+		Info:  DefaultThemeLevel{First: `{fg 33}`},
+		Warning: DefaultThemeLevel{
+			First: `{bold}{fg 172}`,
+			Trail: `{nobold}`,
+		},
+		Error: DefaultThemeLevel{
+			First: `{bold}{fg 9}`,
+			Trail: `{reset}{fg 9}`,
+			Level: `{bold}{fg 231}{bg 196}`,
+		},
+		Fatal: DefaultThemeLevel{
+			First: `{bold}{fg 231}{bg 124}`,
+			Trail: `{reset}{bold}{fg 231}`,
+			Level: `{bold}{fg 231}{bg 196}`,
+		},
 	}
 )
 
@@ -89,20 +131,21 @@ var (
 func ApplyDefaultTheme(
 	formatting string,
 	styles DefaultThemeStyles,
-) (lorg.Formatter, error) {
+) (*Theme, error) {
 	lineStyles := `` +
-		`{ontrace "{{.Trace}}"}` +
-		`{ondebug "{{.Debug}}"}` +
-		`{oninfo "{{.Info}}"}` +
-		`{onwarning "{{.Warning}}"}` +
-		`{onerror "{{.Error}}"}` +
-		`{onfatal "{{.Fatal}}"}` +
+		`{ontrace "{{.Trace.First}}"}` +
+		`{ondebug "{{.Debug.First}}"}` +
+		`{oninfo "{{.Info.First}}"}` +
+		`{onwarning "{{.Warning.First}}"}` +
+		`{onerror "{{.Error.First}}"}` +
+		`{onfatal "{{.Fatal.First}}"}` +
 		`{store}`
 
 	levelStyles := `` +
-		`{onerror "{{.ErrorLevel}}"}` +
-		`{onfatal "{{.FatalLevel}}"}` +
+		`{onerror "{{.Error.Level}}"}` +
+		`{onfatal "{{.Fatal.Level}}"}` +
 		`$0` +
+		`{reset}` +
 		`{restore}`
 
 	format := lineStyles + levelPlaceholderRegexp.ReplaceAllString(
@@ -120,23 +163,51 @@ func ApplyDefaultTheme(
 		return nil, err
 	}
 
-	theme, err := FormatWithReset(buffer.String())
+	formatter, err := FormatWithReset(buffer.String())
 	if err != nil {
 		return nil, err
 	}
 
-	return theme, nil
+	trailStyles := `` +
+		`{ontrace "{{.Trace.Trail}}"}` +
+		`{ondebug "{{.Debug.Trail}}"}` +
+		`{oninfo "{{.Info.Trail}}"}` +
+		`{onwarning "{{.Warning.Trail}}"}` +
+		`{onerror "{{.Error.Trail}}"}` +
+		`{onfatal "{{.Fatal.Trail}}"}`
+
+	buffer.Reset()
+	err = template.Must(template.New(`theme`).Parse(trailStyles)).Execute(
+		&buffer,
+		styles,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	trailer, err := Format(buffer.String())
+	if err != nil {
+		return nil, err
+	}
+
+	return &Theme{
+		Formatter: formatter,
+		SmartOutput: &DefaultOutput{
+			Writer:  os.Stderr,
+			Trailer: trailer,
+		},
+	}, nil
 }
 
 // MustApplyDefaultTheme is the same, as ApplyDefaultTheme, but panics on error.
 func MustApplyDefaultTheme(
 	formatting string,
 	styles DefaultThemeStyles,
-) lorg.Formatter {
-	format, err := ApplyDefaultTheme(formatting, styles)
+) *Theme {
+	theme, err := ApplyDefaultTheme(formatting, styles)
 	if err != nil {
 		panic(err)
 	}
 
-	return format
+	return theme
 }

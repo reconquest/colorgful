@@ -1,6 +1,8 @@
 package colorgful
 
-import "github.com/kovetskiy/lorg"
+import (
+	"github.com/kovetskiy/lorg"
+)
 
 type formatter struct {
 	*lorg.Format
