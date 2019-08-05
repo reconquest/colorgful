@@ -115,7 +115,7 @@ var (
 		},
 		Fatal: DefaultThemeLevel{
 			First: `{bold}{fg 231}{bg 124}`,
-			Trail: `{reset}{bold}{fg 231}`,
+			Trail: `{reset}{bold}{fg 244}`,
 			Level: `{bold}{fg 231}{bg 196}`,
 		},
 	}
