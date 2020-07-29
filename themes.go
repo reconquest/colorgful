@@ -78,7 +78,6 @@ var (
 		Info:    DefaultThemeLevel{First: `{fg 110}`},
 		Warning: DefaultThemeLevel{First: `{fg 178}`},
 		Error: DefaultThemeLevel{
-			First: `{fg 202}`,
 			Level: `{bold}{bg 52}`,
 		},
 		Fatal: DefaultThemeLevel{First: `{bold}{fg 197}{bg 17}`},
@@ -92,7 +91,6 @@ var (
 		Info:    DefaultThemeLevel{First: `{fg 26}`},
 		Warning: DefaultThemeLevel{First: `{fg 167}{bg 230}`},
 		Error: DefaultThemeLevel{
-			First: `{bold}{fg 161}`,
 			Level: `{reverse}{bold}{bg 231}`,
 		},
 		Fatal: DefaultThemeLevel{First: `{bold}{fg 231}{bg 124}`},
@@ -105,25 +103,18 @@ var (
 		Debug: DefaultThemeLevel{First: `{fg 31}`},
 		Info:  DefaultThemeLevel{First: `{fg 33}`},
 		Warning: DefaultThemeLevel{
-			First: `{bold}{fg 172}`,
-			Trail: `{nobold}`,
+			Level: `{bold}{fg 231}{bg 178}`,
 		},
 		Error: DefaultThemeLevel{
-			First: `{bold}{fg 9}`,
-			Trail: `{reset}{fg 9}`,
-			Level: `{bold}{fg 231}{bg 196}`,
+			Level: `{bold}{fg 231}{bg 202}`,
 		},
 		Fatal: DefaultThemeLevel{
-			First: `{bold}{fg 231}{bg 124}`,
-			Trail: `{reset}{bold}{fg 244}`,
 			Level: `{bold}{fg 231}{bg 196}`,
 		},
 	}
 )
 
-var (
-	levelPlaceholderRegexp = regexp.MustCompile(`\s*\${level[^}]*}\s*`)
-)
+var levelPlaceholderRegexp = regexp.MustCompile(`\s*\${level[^}]*}\s*`)
 
 // ApplyDefaultTheme applies default theme to the given lorg formatting string.
 //
@@ -144,6 +135,7 @@ func ApplyDefaultTheme(
 	levelStyles := `` +
 		`{onerror "{{.Error.Level}}"}` +
 		`{onfatal "{{.Fatal.Level}}"}` +
+		`{onwarning "{{.Warning.Level}}"}` +
 		`$0` +
 		`{reset}` +
 		`{restore}`
